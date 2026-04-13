@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "rgmt-imgproc",
-    "rgmt-vllm",
-    "rgmt-core",
-    "rgmt-state",
+    "rgmtrv-imgproc",
+    "rgmtrv-vllm",
+    "rgmtrv-core",
+    "rgmtrv-state",
     "example-app",
 ]
 resolver = "2"

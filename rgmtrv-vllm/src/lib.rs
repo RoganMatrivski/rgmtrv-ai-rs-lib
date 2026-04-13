@@ -1,3 +1,6 @@
+use async_openai::types::chat::ChatCompletionRequestMessageContentPartText;
+#[cfg(feature = "image")]
+use async_openai::types::chat::{ChatCompletionRequestMessageContentPartImage, ImageUrl};
 use async_openai::{
     Client,
     config::OpenAIConfig,
@@ -10,9 +13,6 @@ use async_openai::{
         CreateChatCompletionRequestArgs,
     },
 };
-#[cfg(feature = "image")]
-use async_openai::types::chat::{ChatCompletionRequestMessageContentPartImage, ImageUrl};
-use async_openai::types::chat::ChatCompletionRequestMessageContentPartText;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as B64};
 use eyre::WrapErr;
@@ -21,7 +21,7 @@ use futures::StreamExt;
 use image::GenericImageView;
 
 #[cfg(feature = "image")]
-use rgmt_imgproc::ImageProcessor;
+use rgmtrv_imgproc::ImageProcessor;
 
 // -- Pending parts ------------------------------------------------------------
 

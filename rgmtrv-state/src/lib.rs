@@ -1,9 +1,9 @@
+#[cfg(feature = "image")]
+use rgmtrv_core::img_process;
+use rgmtrv_core::{Tool, extract_json, prompt, strip_fences, try_parse_json};
+use rgmtrv_vllm::{MessageStack, VllmInstance};
 use std::sync::Arc;
 use strum_macros::Display;
-use rgmt_vllm::{MessageStack, VllmInstance};
-use rgmt_core::{prompt, extract_json, strip_fences, try_parse_json, Tool};
-#[cfg(feature = "image")]
-use rgmt_core::img_process;
 
 // ── Domain Types ─────────────────────────────────────────────────────────────
 
@@ -160,13 +160,11 @@ pub struct AppState<T> {
     tools: Vec<Arc<dyn Tool>>,
 }
 
-impl<T> AppState<T> 
-where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
+impl<T> AppState<T>
+where
+    T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static,
 {
-    pub fn new(
-        instance: VllmInstance,
-        pb: Option<indicatif::ProgressBar>,
-    ) -> Self {
+    pub fn new(instance: VllmInstance, pb: Option<indicatif::ProgressBar>) -> Self {
         Self {
             instance,
             pb,
@@ -181,14 +179,13 @@ where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
     }
 
     pub async fn run(
-        mut self, 
-        #[cfg(feature = "image")]
-        img: Option<image::DynamicImage>,
+        mut self,
+        #[cfg(feature = "image")] img: Option<image::DynamicImage>,
         system_prompt: impl Into<String>,
-        user_prompt: impl Into<String>
+        user_prompt: impl Into<String>,
     ) -> eyre::Result<T> {
         let builder = self.initialize_msgstack().await?;
-        
+
         let mut msgstack = builder.system(system_prompt);
 
         #[cfg(feature = "image")]
@@ -236,7 +233,7 @@ where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
         eyre::bail!("State machine exited without returning a result")
     }
 
-    async fn initialize_msgstack<'a>(&'a self) -> eyre::Result<rgmt_vllm::ChatBuilder<'a>> {
+    async fn initialize_msgstack<'a>(&'a self) -> eyre::Result<rgmtrv_vllm::ChatBuilder<'a>> {
         let mut builder = self.instance.chat();
         for tool in &self.tools {
             builder = builder.add_tool(tool.name(), tool.description(), tool.parameters());
@@ -305,17 +302,24 @@ where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
                         }
                     }
                     Err(e) => {
-                        errors.push(eyre::eyre!("Invalid JSON in tool arguments for {}: {}", tc.function.name, e));
+                        errors.push(eyre::eyre!(
+                            "Invalid JSON in tool arguments for {}: {}",
+                            tc.function.name,
+                            e
+                        ));
                     }
                 }
             } else {
                 errors.push(eyre::eyre!("Tool {} not found", tc.function.name));
             }
         }
-        
+
         if !errors.is_empty() {
             self.state.transition(State::Repair(RepairPayload {
-                message: format!("{} tool call(s) had invalid arguments or were not found", errors.len()),
+                message: format!(
+                    "{} tool call(s) had invalid arguments or were not found",
+                    errors.len()
+                ),
                 causes: errors,
                 data: RepairData::ToolCall((msg, tool_calls)),
                 origin: RepairOrigin::FromSearch,
@@ -466,7 +470,11 @@ where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
                                 }
                             }
                             Err(e) => {
-                                errors.push(eyre::eyre!("Invalid JSON in tool arguments for {}: {}", tc.function.name, e));
+                                errors.push(eyre::eyre!(
+                                    "Invalid JSON in tool arguments for {}: {}",
+                                    tc.function.name,
+                                    e
+                                ));
                             }
                         }
                     } else {

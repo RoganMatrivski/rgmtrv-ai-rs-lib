@@ -494,9 +494,9 @@ version = "0.1.0"
 dependencies = [
  "eyre",
  "image",
- "rgmt-core",
- "rgmt-state",
- "rgmt-vllm",
+ "rgmtrv-core",
+ "rgmtrv-state",
+ "rgmtrv-vllm",
  "serde",
  "serde_json",
  "tokio",
@@ -1636,7 +1636,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rgmt-core"
+name = "rgmtrv-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -1645,7 +1645,7 @@ dependencies = [
  "image",
  "json-fixer",
  "reqwest 0.13.2",
- "rgmt-imgproc",
+ "rgmtrv-imgproc",
  "serde",
  "serde_json",
  "tokio",
@@ -1655,7 +1655,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rgmt-imgproc"
+name = "rgmtrv-imgproc"
 version = "0.1.0"
 dependencies = [
  "bon",
@@ -1663,7 +1663,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rgmt-state"
+name = "rgmtrv-state"
 version = "0.1.0"
 dependencies = [
  "async-openai",
@@ -1674,9 +1674,9 @@ dependencies = [
  "image",
  "indicatif",
  "json-fixer",
- "rgmt-core",
- "rgmt-imgproc",
- "rgmt-vllm",
+ "rgmtrv-core",
+ "rgmtrv-imgproc",
+ "rgmtrv-vllm",
  "serde",
  "serde_json",
  "strum",
@@ -1687,7 +1687,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rgmt-vllm"
+name = "rgmtrv-vllm"
 version = "0.1.0"
 dependencies = [
  "async-openai",
@@ -1695,7 +1695,7 @@ dependencies = [
  "eyre",
  "futures",
  "image",
- "rgmt-imgproc",
+ "rgmtrv-imgproc",
  "serde_json",
 ]
 

@@ -1,8 +1,8 @@
 pub mod prompt;
 
-use std::path::Path;
-pub use serde::{Deserialize, Serialize};
 use eyre::ContextCompat;
+pub use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 pub use async_trait::async_trait;
 
@@ -72,7 +72,7 @@ pub fn extract_json(raw: &str) -> &str {
 #[cfg(feature = "image")]
 pub fn img_process(img: image::DynamicImage) -> eyre::Result<image::DynamicImage> {
     use image::GenericImageView;
-    use rgmt_imgproc::ImageProcessor;
+    use rgmtrv_imgproc::ImageProcessor;
 
     let proc = ImageProcessor::builder()
         .image(img)
@@ -133,8 +133,9 @@ pub fn fix_json_escapes(s: &str) -> String {
     result
 }
 
-pub fn try_parse_json<T>(raw: &str) -> eyre::Result<T> 
-where T: serde::de::DeserializeOwned 
+pub fn try_parse_json<T>(raw: &str) -> eyre::Result<T>
+where
+    T: serde::de::DeserializeOwned,
 {
     if let Ok(s) = serde_json::from_str::<T>(raw) {
         return Ok(s);

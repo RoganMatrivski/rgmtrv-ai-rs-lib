@@ -1,5 +1,5 @@
 [package]
-name = "rgmt-core"
+name = "rgmtrv-core"
 version = "0.1.0"
 edition = "2024"
 
@@ -10,7 +10,7 @@ eyre = "0.6"
 image = { version = "0.23", optional = true }
 url = "2.5"
 reqwest = { version = "0.13", features = ["json"] }
-rgmt-imgproc = { path = "../rgmt-imgproc", optional = true }
+rgmtrv-imgproc = { path = "../rgmtrv-imgproc", optional = true }
 futures = "0.3"
 tracing = "0.1"
 tokio = { version = "1.0", features = ["full"] }
@@ -20,4 +20,4 @@ async-trait = "0.1"
 
 [features]
 default = ["image"]
-image = ["dep:image", "dep:rgmt-imgproc"]
+image = ["dep:image", "dep:rgmtrv-imgproc"]

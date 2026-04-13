@@ -1,5 +1,5 @@
 [package]
-name = "rgmt-state"
+name = "rgmtrv-state"
 version = "0.1.0"
 edition = "2024"
 
@@ -20,16 +20,16 @@ indicatif = "0.18"
 json-fixer = "0.1"
 async-trait = "0.1"
 
-rgmt-imgproc = { path = "../rgmt-imgproc", optional = true }
-rgmt-vllm = { path = "../rgmt-vllm" }
-rgmt-core = { path = "../rgmt-core" }
+rgmtrv-imgproc = { path = "../rgmtrv-imgproc", optional = true }
+rgmtrv-vllm = { path = "../rgmtrv-vllm" }
+rgmtrv-core = { path = "../rgmtrv-core" }
 
 [features]
 default = ["image"]
 image = [
-    "dep:image", 
-    "dep:rgmt-imgproc", 
-    "async-openai/image", 
-    "rgmt-core/image", 
-    "rgmt-vllm/image"
+    "dep:image",
+    "dep:rgmtrv-imgproc",
+    "async-openai/image",
+    "rgmtrv-core/image",
+    "rgmtrv-vllm/image"
 ]
