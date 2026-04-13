@@ -69,6 +69,7 @@ pub fn extract_json(raw: &str) -> &str {
     after_think[start..end].trim()
 }
 
+#[cfg(feature = "image")]
 pub fn img_process(img: image::DynamicImage) -> eyre::Result<image::DynamicImage> {
     use image::GenericImageView;
     use rgmt_imgproc::ImageProcessor;

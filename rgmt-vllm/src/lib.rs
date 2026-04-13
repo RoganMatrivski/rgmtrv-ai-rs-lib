@@ -4,18 +4,23 @@ use async_openai::{
     types::chat::{
         ChatCompletionMessageToolCall, ChatCompletionMessageToolCalls,
         ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestMessage,
-        ChatCompletionRequestMessageContentPartImage, ChatCompletionRequestMessageContentPartText,
         ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestToolMessageArgs,
         ChatCompletionRequestUserMessageArgs, ChatCompletionRequestUserMessageContent,
         ChatCompletionRequestUserMessageContentPart, ChatCompletionTool, ChatCompletionTools,
-        CreateChatCompletionRequestArgs, ImageUrl,
+        CreateChatCompletionRequestArgs,
     },
 };
+#[cfg(feature = "image")]
+use async_openai::types::chat::{ChatCompletionRequestMessageContentPartImage, ImageUrl};
+use async_openai::types::chat::ChatCompletionRequestMessageContentPartText;
+
 use base64::{Engine as _, engine::general_purpose::STANDARD as B64};
 use eyre::WrapErr;
 use futures::StreamExt;
+#[cfg(feature = "image")]
 use image::GenericImageView;
 
+#[cfg(feature = "image")]
 use rgmt_imgproc::ImageProcessor;
 
 // -- Pending parts ------------------------------------------------------------
@@ -23,6 +28,7 @@ use rgmt_imgproc::ImageProcessor;
 #[derive(Clone)]
 enum PendingPart {
     Text(String),
+    #[cfg(feature = "image")]
     Image(image::DynamicImage),
 }
 
@@ -68,6 +74,7 @@ impl MessageStack {
         self
     }
 
+    #[cfg(feature = "image")]
     pub fn user_image_text(mut self, img: image::DynamicImage, text: impl Into<String>) -> Self {
         self.messages.push(PendingMessage {
             role: "user".into(),
@@ -78,6 +85,7 @@ impl MessageStack {
         self
     }
 
+    #[cfg(feature = "image")]
     pub fn user_image(mut self, img: image::DynamicImage) -> Self {
         self.messages.push(PendingMessage {
             role: "user".into(),
@@ -170,6 +178,7 @@ impl MessageStack {
                                     ChatCompletionRequestMessageContentPartText { text }.into(),
                                 );
                             }
+                            #[cfg(feature = "image")]
                             PendingPart::Image(img) => {
                                 let img = img_process(img)?;
                                 let url = img_to_data_url(img)?;
@@ -246,11 +255,13 @@ impl<'a> ChatBuilder<'a> {
         self
     }
 
+    #[cfg(feature = "image")]
     pub fn user_image_text(mut self, img: image::DynamicImage, text: impl Into<String>) -> Self {
         self.stack = self.stack.user_image_text(img, text);
         self
     }
 
+    #[cfg(feature = "image")]
     pub fn user_image(mut self, img: image::DynamicImage) -> Self {
         self.stack = self.stack.user_image(img);
         self
@@ -429,6 +440,7 @@ impl VllmInstance {
 
 // -- Helpers ------------------------------------------------------------------
 
+#[cfg(feature = "image")]
 fn img_to_data_url(img: image::DynamicImage) -> eyre::Result<String> {
     let mut buf = Vec::new();
     let mut cursor = std::io::Cursor::new(&mut buf);
@@ -441,12 +453,14 @@ fn collect_text(parts: Vec<PendingPart>) -> String {
         .into_iter()
         .filter_map(|p| match p {
             PendingPart::Text(t) => Some(t),
+            #[cfg(feature = "image")]
             _ => None,
         })
         .collect::<Vec<_>>()
         .join("\n")
 }
 
+#[cfg(feature = "image")]
 fn img_process(img: image::DynamicImage) -> eyre::Result<image::DynamicImage> {
     let proc = ImageProcessor::builder()
         .image(img)

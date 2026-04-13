@@ -1,7 +1,9 @@
 use std::sync::Arc;
 use strum_macros::Display;
 use rgmt_vllm::{MessageStack, VllmInstance};
-use rgmt_core::{prompt, extract_json, strip_fences, img_process, try_parse_json, Tool};
+use rgmt_core::{prompt, extract_json, strip_fences, try_parse_json, Tool};
+#[cfg(feature = "image")]
+use rgmt_core::img_process;
 
 // ── Domain Types ─────────────────────────────────────────────────────────────
 
@@ -180,6 +182,7 @@ where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
 
     pub async fn run(
         mut self, 
+        #[cfg(feature = "image")]
         img: Option<image::DynamicImage>,
         system_prompt: impl Into<String>,
         user_prompt: impl Into<String>
@@ -188,10 +191,17 @@ where T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static
         
         let mut msgstack = builder.system(system_prompt);
 
-        if let Some(img) = img {
-            let img = img_process(img)?;
-            msgstack = msgstack.user_image_text(img, user_prompt);
-        } else {
+        #[cfg(feature = "image")]
+        {
+            if let Some(img) = img {
+                let img = img_process(img)?;
+                msgstack = msgstack.user_image_text(img, user_prompt);
+            } else {
+                msgstack = msgstack.user_text(user_prompt);
+            }
+        }
+        #[cfg(not(feature = "image"))]
+        {
             msgstack = msgstack.user_text(user_prompt);
         }
 
