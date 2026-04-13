@@ -96,6 +96,31 @@ impl MessageStack {
         self
     }
 
+    #[cfg(feature = "image")]
+    pub fn user_images(mut self, imgs: Vec<image::DynamicImage>) -> Self {
+        let parts = imgs.into_iter().map(PendingPart::Image).collect();
+        self.messages.push(PendingMessage {
+            role: "user".into(),
+            parts,
+            tool_calls: None,
+            tool_call_id: None,
+        });
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_images_text(mut self, imgs: Vec<image::DynamicImage>, text: impl Into<String>) -> Self {
+        let mut parts: Vec<PendingPart> = imgs.into_iter().map(PendingPart::Image).collect();
+        parts.push(PendingPart::Text(text.into()));
+        self.messages.push(PendingMessage {
+            role: "user".into(),
+            parts,
+            tool_calls: None,
+            tool_call_id: None,
+        });
+        self
+    }
+
     pub fn assistant_text(mut self, text: impl Into<String>) -> Self {
         self.messages.push(PendingMessage {
             role: "assistant".into(),
@@ -267,6 +292,18 @@ impl<'a> ChatBuilder<'a> {
         self
     }
 
+    #[cfg(feature = "image")]
+    pub fn user_images(mut self, imgs: Vec<image::DynamicImage>) -> Self {
+        self.stack = self.stack.user_images(imgs);
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_images_text(mut self, imgs: Vec<image::DynamicImage>, text: impl Into<String>) -> Self {
+        self.stack = self.stack.user_images_text(imgs, text);
+        self
+    }
+
     pub fn assistant_text(mut self, text: impl Into<String>) -> Self {
         self.stack = self.stack.assistant_text(text);
         self
@@ -342,6 +379,35 @@ impl VllmInstance {
 
     pub fn chat(&self) -> ChatBuilder<'_> {
         ChatBuilder::new(self)
+    }
+
+    /// Automatically fetch the first available model from the vLLM server.
+    /// vLLM usually loads only 1 model at a time.
+    pub async fn new_auto(
+        base_url: impl Into<String>,
+        api_key: impl Into<String>,
+    ) -> eyre::Result<Self> {
+        let base_url = base_url.into();
+        let api_key = api_key.into();
+        let config = OpenAIConfig::new()
+            .with_api_base(base_url.clone())
+            .with_api_key(api_key.clone());
+
+        let client = Client::with_config(config);
+        let models = client.models().list().await.wrap_err("Failed to list models")?;
+        let model = models
+            .data
+            .first()
+            .map(|m| m.id.clone())
+            .ok_or_else(|| eyre::eyre!("No models found at {}", base_url))?;
+
+        Ok(Self { client, model })
+    }
+
+    /// List all models available on the vLLM server.
+    pub async fn list_models(&self) -> eyre::Result<Vec<String>> {
+        let response = self.client.models().list().await?;
+        Ok(response.data.into_iter().map(|m| m.id).collect())
     }
 
     pub async fn stream_messages(
@@ -481,4 +547,45 @@ fn img_process(img: image::DynamicImage) -> eyre::Result<image::DynamicImage> {
         .process();
 
     Ok(img)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::{DynamicImage, RgbaImage};
+
+    fn blank(w: u32, h: u32) -> DynamicImage {
+        DynamicImage::ImageRgba8(RgbaImage::new(w, h))
+    }
+
+    #[test]
+    fn test_message_stack_sequence() {
+        let stack = MessageStack::new()
+            .system("sys")
+            .user_images(vec![blank(100, 100), blank(200, 200)])
+            .user_images_text(vec![blank(50, 50)], "with text");
+
+        let messages = stack.resolve().unwrap();
+        assert_eq!(messages.len(), 3);
+
+        if let ChatCompletionRequestMessage::User(msg) = &messages[1] {
+            if let ChatCompletionRequestUserMessageContent::Array(parts) = &msg.content {
+                assert_eq!(parts.len(), 2);
+            } else {
+                panic!("Expected array content");
+            }
+        } else {
+            panic!("Expected user message");
+        }
+
+        if let ChatCompletionRequestMessage::User(msg) = &messages[2] {
+            if let ChatCompletionRequestUserMessageContent::Array(parts) = &msg.content {
+                assert_eq!(parts.len(), 2);
+            } else {
+                panic!("Expected array content");
+            }
+        } else {
+            panic!("Expected user message");
+        }
+    }
 }
