@@ -1,5 +1,3 @@
-pub mod prompt;
-
 use eyre::ContextCompat;
 pub use serde::{Deserialize, Serialize};
 use std::path::Path;

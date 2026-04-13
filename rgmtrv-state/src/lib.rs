@@ -1,6 +1,6 @@
 #[cfg(feature = "image")]
 use rgmtrv_core::img_process;
-use rgmtrv_core::{Tool, extract_json, prompt, strip_fences, try_parse_json};
+use rgmtrv_core::{Tool, extract_json, strip_fences, try_parse_json};
 use rgmtrv_vllm::{MessageStack, VllmInstance};
 use std::sync::Arc;
 use strum_macros::Display;
@@ -171,7 +171,14 @@ where
             pb,
             state: StateMachine::new(),
             tools: Vec::new(),
-            repair_prompt: prompt::REPAIR_PROMPT.to_string(),
+            repair_prompt: r#"/no_think
+The previous response was invalid. 
+Message: {msg}
+Errors:
+{err}
+Context:
+{data}
+Please fix the output and return only the corrected JSON object."#.to_string(),
         }
     }
 
