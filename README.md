@@ -1,6 +1,6 @@
 # What's this?
 
-🚀 Excited to share my go-to toolkit for kickstarting AI/LLM-based projects! 🛠️
+🚀 My go-to toolkit for kickstarting AI/LLM-based projects! 🛠️
 
 These crates are built on a foundation of strong, opinionated principles that streamline my workflow. While they’re tailored to my specific approach, they offer a robust starting point for anyone looking to innovate in this space. 💡
 
