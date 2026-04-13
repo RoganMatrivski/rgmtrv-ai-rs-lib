@@ -158,6 +158,7 @@ pub struct AppState<T> {
     pb: Option<indicatif::ProgressBar>,
     state: StateMachine<T>,
     tools: Vec<Arc<dyn Tool>>,
+    repair_prompt: String,
 }
 
 impl<T> AppState<T>
@@ -170,7 +171,13 @@ where
             pb,
             state: StateMachine::new(),
             tools: Vec::new(),
+            repair_prompt: prompt::REPAIR_PROMPT.to_string(),
         }
+    }
+
+    pub fn with_repair_prompt(mut self, prompt: impl Into<String>) -> Self {
+        self.repair_prompt = prompt.into();
+        self
     }
 
     pub fn add_tool(mut self, tool: Arc<dyn Tool>) -> Self {
@@ -416,7 +423,7 @@ where
                     .map(|(i, e)| format!("{}. {e}", i + 1))
                     .collect::<Vec<_>>()
                     .join("\n");
-                let err_msg = prompt::REPAIR_PROMPT
+                let err_msg = self.repair_prompt
                     .replace("{msg}", &payload.message)
                     .replace("{err}", &all_errors)
                     .replace("{data}", &data_context);
