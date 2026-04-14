@@ -10,7 +10,7 @@ use async_openai::{
         ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestToolMessageArgs,
         ChatCompletionRequestUserMessageArgs, ChatCompletionRequestUserMessageContent,
         ChatCompletionRequestUserMessageContentPart, ChatCompletionTool, ChatCompletionTools,
-        CreateChatCompletionRequestArgs, ChatCompletionToolChoiceOption, ToolChoiceOptions,
+        CreateChatCompletionRequestArgs, ChatCompletionToolChoiceOption,
     },
 };
 
@@ -259,7 +259,7 @@ pub struct ChatBuilder<'a> {
     instance: &'a VllmInstance,
     stack: MessageStack,
     tools: Vec<ChatCompletionTool>,
-    force_tool_call: bool,
+    force_tool_call: Option<String>,
     force_multiple_tool_calls: bool,
 }
 
@@ -269,7 +269,7 @@ impl<'a> ChatBuilder<'a> {
             instance,
             stack: MessageStack::new(),
             tools: Vec::new(),
-            force_tool_call: false,
+            force_tool_call: None,
             force_multiple_tool_calls: false,
         }
     }
@@ -336,8 +336,8 @@ impl<'a> ChatBuilder<'a> {
         self
     }
 
-    pub fn force_tool_call(mut self, value: bool) -> Self {
-        self.force_tool_call = value;
+    pub fn force_tool_call(mut self, name: impl Into<String>) -> Self {
+        self.force_tool_call = Some(name.into());
         self
     }
 
@@ -438,7 +438,7 @@ impl VllmInstance {
         &self,
         messages: Vec<ChatCompletionRequestMessage>,
         tools: Option<Vec<ChatCompletionTool>>,
-        force_tool_call: bool,
+        force_tool_call: Option<String>,
         force_multiple_tool_calls: bool,
     ) -> eyre::Result<ChatResponse> {
         let mut builder = CreateChatCompletionRequestArgs::default();
@@ -459,8 +459,14 @@ impl VllmInstance {
                     .collect();
                 builder.tools(tools);
 
-                if force_tool_call {
-                    builder.tool_choice(ChatCompletionToolChoiceOption::Mode(ToolChoiceOptions::Required));
+                if let Some(name) = force_tool_call {
+                    builder.tool_choice(ChatCompletionToolChoiceOption::Function(
+                        async_openai::types::chat::ChatCompletionNamedToolChoice {
+                            function: async_openai::types::chat::FunctionName {
+                                name,
+                            },
+                        },
+                    ));
                 }
                 if force_multiple_tool_calls {
                     builder.parallel_tool_calls(true);

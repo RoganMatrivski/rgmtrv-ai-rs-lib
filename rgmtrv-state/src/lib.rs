@@ -279,7 +279,7 @@ Please fix the output and return only the corrected JSON object."#.to_string(),
     async fn handle_infer(&mut self, msgstack: &mut MessageStack) -> eyre::Result<()> {
         let res = self
             .instance
-            .stream_messages(msgstack.clone().resolve()?, None)
+            .stream_messages(msgstack.clone().resolve()?, None, None, false)
             .await?;
 
         if res.tool_calls.is_empty() {
@@ -369,7 +369,7 @@ Please fix the output and return only the corrected JSON object."#.to_string(),
 
         let res = self
             .instance
-            .stream_messages(msgstack.clone().resolve()?, None)
+            .stream_messages(msgstack.clone().resolve()?, None, None, false)
             .await?;
 
         if res.tool_calls.is_empty() {
@@ -446,7 +446,7 @@ Please fix the output and return only the corrected JSON object."#.to_string(),
         *msgstack = msgstack.clone().user_text(err_msg);
         let res = self
             .instance
-            .stream_messages(msgstack.clone().resolve()?, None)
+            .stream_messages(msgstack.clone().resolve()?, None, None, false)
             .await?;
 
         match origin {
