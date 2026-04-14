@@ -10,7 +10,7 @@ use async_openai::{
         ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestToolMessageArgs,
         ChatCompletionRequestUserMessageArgs, ChatCompletionRequestUserMessageContent,
         ChatCompletionRequestUserMessageContentPart, ChatCompletionTool, ChatCompletionTools,
-        CreateChatCompletionRequestArgs,
+        CreateChatCompletionRequestArgs, ChatCompletionToolChoiceOption, ToolChoiceOptions,
     },
 };
 
@@ -259,6 +259,8 @@ pub struct ChatBuilder<'a> {
     instance: &'a VllmInstance,
     stack: MessageStack,
     tools: Vec<ChatCompletionTool>,
+    force_tool_call: bool,
+    force_multiple_tool_calls: bool,
 }
 
 impl<'a> ChatBuilder<'a> {
@@ -267,6 +269,8 @@ impl<'a> ChatBuilder<'a> {
             instance,
             stack: MessageStack::new(),
             tools: Vec::new(),
+            force_tool_call: false,
+            force_multiple_tool_calls: false,
         }
     }
 
@@ -332,11 +336,26 @@ impl<'a> ChatBuilder<'a> {
         self
     }
 
+    pub fn force_tool_call(mut self, value: bool) -> Self {
+        self.force_tool_call = value;
+        self
+    }
+
+    pub fn force_multiple_tool_calls(mut self, value: bool) -> Self {
+        self.force_multiple_tool_calls = value;
+        self
+    }
+
     pub async fn send(self) -> eyre::Result<String> {
         let messages = self.stack.resolve()?;
         let res = self
             .instance
-            .stream_messages(messages, Some(self.tools))
+            .stream_messages(
+                messages,
+                Some(self.tools),
+                self.force_tool_call,
+                self.force_multiple_tool_calls,
+            )
             .await?;
         Ok(res.content.unwrap_or_default())
     }
@@ -344,7 +363,12 @@ impl<'a> ChatBuilder<'a> {
     pub async fn send_full(self) -> eyre::Result<ChatResponse> {
         let messages = self.stack.resolve()?;
         self.instance
-            .stream_messages(messages, Some(self.tools))
+            .stream_messages(
+                messages,
+                Some(self.tools),
+                self.force_tool_call,
+                self.force_multiple_tool_calls,
+            )
             .await
     }
 
@@ -414,6 +438,8 @@ impl VllmInstance {
         &self,
         messages: Vec<ChatCompletionRequestMessage>,
         tools: Option<Vec<ChatCompletionTool>>,
+        force_tool_call: bool,
+        force_multiple_tool_calls: bool,
     ) -> eyre::Result<ChatResponse> {
         let mut builder = CreateChatCompletionRequestArgs::default();
         builder
@@ -432,6 +458,13 @@ impl VllmInstance {
                     .map(ChatCompletionTools::Function)
                     .collect();
                 builder.tools(tools);
+
+                if force_tool_call {
+                    builder.tool_choice(ChatCompletionToolChoiceOption::Mode(ToolChoiceOptions::Required));
+                }
+                if force_multiple_tool_calls {
+                    builder.parallel_tool_calls(true);
+                }
             }
         }
 
