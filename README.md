@@ -1,7 +1,9 @@
 # What's this?
 
-A miscellaneous stuff i use to start an AI-LLM-based projects.
+🚀 My go-to toolkit for kickstarting AI/LLM-based projects! 🛠️
 
-These crates is heavily opinionated to me, you can use these crates, but it might not fit your use case exactly.
+These crates are built on a foundation of strong, opinionated principles that streamline my workflow. While they’re tailored to my specific approach, they offer a robust starting point for anyone looking to innovate in this space. 💡
 
-Yes it's AI slop, but it's a "verified" AI slop.
+Yes, it leverages AI-generated components, but think of it as "verified" AI excellence—optimized, vetted, and ready to deliver results. Let’s keep pushing the boundaries of what’s possible! 📈 #AI #LLM #SoftwareEngineering #Innovation #TechStack
+
+(ngl this paragraph makes me cringe heavily)
