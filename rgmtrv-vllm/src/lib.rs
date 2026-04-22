@@ -317,7 +317,7 @@ pub struct ChatResponse {
 // -- ChatBuilder --------------------------------------------------------------
 
 pub struct ChatBuilder<'a> {
-    instance: &'a VllmInstance,
+    instance: &'a OpenAiInstance,
     stack: MessageStack,
     tools: Vec<ChatCompletionTool>,
     force_tool_call: Option<String>,
@@ -325,7 +325,7 @@ pub struct ChatBuilder<'a> {
 }
 
 impl<'a> ChatBuilder<'a> {
-    fn new(instance: &'a VllmInstance) -> Self {
+    fn new(instance: &'a OpenAiInstance) -> Self {
         Self {
             instance,
             stack: MessageStack::new(),
@@ -470,15 +470,17 @@ impl<'a> ChatBuilder<'a> {
     }
 }
 
-// -- VllmInstance -------------------------------------------------------------
+// -- OpenAiInstance -----------------------------------------------------------
+
+pub type VllmInstance = OpenAiInstance;
 
 #[derive(Clone)]
-pub struct VllmInstance {
+pub struct OpenAiInstance {
     client: Client<OpenAIConfig>,
     pub model: String,
 }
 
-impl VllmInstance {
+impl OpenAiInstance {
     pub fn new(
         base_url: impl Into<String>,
         model: impl Into<String>,

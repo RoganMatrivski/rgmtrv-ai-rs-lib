@@ -1,6 +1,6 @@
 use rgmtrv_core::{Tool, async_trait};
 use rgmtrv_state::AppState;
-use rgmtrv_vllm::VllmInstance;
+use rgmtrv_vllm::OpenAiInstance;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -59,7 +59,7 @@ async fn main() -> eyre::Result<()> {
 
     println!("--- Tool-Enabled Generic LLM Framework Example ---");
 
-    let instance = VllmInstance::new(
+    let instance = OpenAiInstance::new(
         "https://llama-cpp.rgmtrv.my.id/v1",
         "unsloth/Qwen3.5-2B-GGUF",
         "no-key-needed",

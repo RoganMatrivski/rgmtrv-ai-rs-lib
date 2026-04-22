@@ -1,7 +1,7 @@
 #[cfg(feature = "image")]
 use rgmtrv_core::img_process;
 use rgmtrv_core::{Tool, extract_json, strip_fences, try_parse_json};
-use rgmtrv_vllm::{MessageStack, VllmInstance};
+use rgmtrv_vllm::{MessageStack, OpenAiInstance};
 use std::sync::Arc;
 use strum_macros::Display;
 
@@ -154,7 +154,7 @@ impl<T> StateMachine<T> {
 // ── Application Logic ────────────────────────────────────────────────────────
 
 pub struct AppState<T> {
-    instance: VllmInstance,
+    instance: OpenAiInstance,
     pb: Option<indicatif::ProgressBar>,
     state: StateMachine<T>,
     tools: Vec<Arc<dyn Tool>>,
@@ -165,7 +165,7 @@ impl<T> AppState<T>
 where
     T: serde::de::DeserializeOwned + Clone + Send + Sync + 'static,
 {
-    pub fn new(instance: VllmInstance, pb: Option<indicatif::ProgressBar>) -> Self {
+    pub fn new(instance: OpenAiInstance, pb: Option<indicatif::ProgressBar>) -> Self {
         Self {
             instance,
             pb,
