@@ -11,6 +11,7 @@ use async_openai::{
         ChatCompletionRequestUserMessageArgs, ChatCompletionRequestUserMessageContent,
         ChatCompletionRequestUserMessageContentPart, ChatCompletionTool, ChatCompletionTools,
         CreateChatCompletionRequestArgs, ChatCompletionToolChoiceOption,
+        CreateChatCompletionStreamResponse,
     },
 };
 
@@ -322,6 +323,7 @@ pub struct ChatBuilder<'a> {
     tools: Vec<ChatCompletionTool>,
     force_tool_call: Option<String>,
     force_multiple_tool_calls: bool,
+    extra_params: serde_json::Map<String, serde_json::Value>,
 }
 
 impl<'a> ChatBuilder<'a> {
@@ -332,7 +334,13 @@ impl<'a> ChatBuilder<'a> {
             tools: Vec::new(),
             force_tool_call: None,
             force_multiple_tool_calls: false,
+            extra_params: serde_json::Map::new(),
         }
+    }
+
+    pub fn extra_param(mut self, key: impl Into<String>, value: impl Into<serde_json::Value>) -> Self {
+        self.extra_params.insert(key.into(), value.into());
+        self
     }
 
     pub fn system(mut self, text: impl Into<String>) -> Self {
@@ -448,6 +456,7 @@ impl<'a> ChatBuilder<'a> {
                 Some(self.tools),
                 self.force_tool_call,
                 self.force_multiple_tool_calls,
+                self.extra_params,
             )
             .await?;
         Ok(res.content.unwrap_or_default())
@@ -461,6 +470,7 @@ impl<'a> ChatBuilder<'a> {
                 Some(self.tools),
                 self.force_tool_call,
                 self.force_multiple_tool_calls,
+                self.extra_params,
             )
             .await
     }
@@ -535,6 +545,7 @@ impl OpenAiInstance {
         tools: Option<Vec<ChatCompletionTool>>,
         force_tool_call: Option<String>,
         force_multiple_tool_calls: bool,
+        extra_params: serde_json::Map<String, serde_json::Value>,
     ) -> eyre::Result<ChatResponse> {
         let mut builder = CreateChatCompletionRequestArgs::default();
         builder
@@ -573,10 +584,18 @@ impl OpenAiInstance {
             .build()
             .wrap_err("Failed to build chat completion request")?;
 
+        // Merge extra_params into the request JSON
+        let mut json_request = serde_json::to_value(request)?;
+        if let Some(obj) = json_request.as_object_mut() {
+            for (k, v) in extra_params {
+                obj.insert(k, v);
+            }
+        }
+
         let mut stream = self
             .client
             .chat()
-            .create_stream(request)
+            .create_stream_byot::<_, CreateChatCompletionStreamResponse>(json_request)
             .await
             .wrap_err("Failed to open vLLM stream")?;
 
@@ -721,5 +740,16 @@ mod tests {
         } else {
             panic!("Expected user message");
         }
+    }
+
+    #[test]
+    fn test_chat_builder_extra_params() {
+        let instance = OpenAiInstance::new("http://localhost", "model", "key");
+        let builder = instance.chat()
+            .extra_param("repetition_penalty", 1.2)
+            .extra_param("custom_flag", true);
+
+        assert_eq!(builder.extra_params.get("repetition_penalty").unwrap(), &serde_json::json!(1.2));
+        assert_eq!(builder.extra_params.get("custom_flag").unwrap(), &serde_json::json!(true));
     }
 }
