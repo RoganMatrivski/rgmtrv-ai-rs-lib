@@ -86,6 +86,17 @@ impl MessageStack {
     }
 
     #[cfg(feature = "image")]
+    pub fn user_text_image(mut self, text: impl Into<String>, img: image::DynamicImage) -> Self {
+        self.messages.push(PendingMessage {
+            role: "user".into(),
+            parts: vec![PendingPart::Text(text.into()), PendingPart::Image(img)],
+            tool_calls: None,
+            tool_call_id: None,
+        });
+        self
+    }
+
+    #[cfg(feature = "image")]
     pub fn user_image(mut self, img: image::DynamicImage) -> Self {
         self.messages.push(PendingMessage {
             role: "user".into(),
@@ -109,9 +120,59 @@ impl MessageStack {
     }
 
     #[cfg(feature = "image")]
-    pub fn user_images_text(mut self, imgs: Vec<image::DynamicImage>, text: impl Into<String>) -> Self {
+    pub fn user_image_sequence(mut self, imgs: impl IntoIterator<Item = image::DynamicImage>) -> Self {
+        let parts = imgs.into_iter().map(PendingPart::Image).collect();
+        self.messages.push(PendingMessage {
+            role: "user".into(),
+            parts,
+            tool_calls: None,
+            tool_call_id: None,
+        });
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_images_text(
+        mut self,
+        imgs: Vec<image::DynamicImage>,
+        text: impl Into<String>,
+    ) -> Self {
         let mut parts: Vec<PendingPart> = imgs.into_iter().map(PendingPart::Image).collect();
         parts.push(PendingPart::Text(text.into()));
+        self.messages.push(PendingMessage {
+            role: "user".into(),
+            parts,
+            tool_calls: None,
+            tool_call_id: None,
+        });
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_image_sequence_text(
+        mut self,
+        imgs: impl IntoIterator<Item = image::DynamicImage>,
+        text: impl Into<String>,
+    ) -> Self {
+        let mut parts: Vec<PendingPart> = imgs.into_iter().map(PendingPart::Image).collect();
+        parts.push(PendingPart::Text(text.into()));
+        self.messages.push(PendingMessage {
+            role: "user".into(),
+            parts,
+            tool_calls: None,
+            tool_call_id: None,
+        });
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_text_image_sequence(
+        mut self,
+        text: impl Into<String>,
+        imgs: impl IntoIterator<Item = image::DynamicImage>,
+    ) -> Self {
+        let mut parts = vec![PendingPart::Text(text.into())];
+        parts.extend(imgs.into_iter().map(PendingPart::Image));
         self.messages.push(PendingMessage {
             role: "user".into(),
             parts,
@@ -291,6 +352,12 @@ impl<'a> ChatBuilder<'a> {
     }
 
     #[cfg(feature = "image")]
+    pub fn user_text_image(mut self, text: impl Into<String>, img: image::DynamicImage) -> Self {
+        self.stack = self.stack.user_text_image(text, img);
+        self
+    }
+
+    #[cfg(feature = "image")]
     pub fn user_image(mut self, img: image::DynamicImage) -> Self {
         self.stack = self.stack.user_image(img);
         self
@@ -303,8 +370,34 @@ impl<'a> ChatBuilder<'a> {
     }
 
     #[cfg(feature = "image")]
+    pub fn user_image_sequence(mut self, imgs: impl IntoIterator<Item = image::DynamicImage>) -> Self {
+        self.stack = self.stack.user_image_sequence(imgs);
+        self
+    }
+
+    #[cfg(feature = "image")]
     pub fn user_images_text(mut self, imgs: Vec<image::DynamicImage>, text: impl Into<String>) -> Self {
         self.stack = self.stack.user_images_text(imgs, text);
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_image_sequence_text(
+        mut self,
+        imgs: impl IntoIterator<Item = image::DynamicImage>,
+        text: impl Into<String>,
+    ) -> Self {
+        self.stack = self.stack.user_image_sequence_text(imgs, text);
+        self
+    }
+
+    #[cfg(feature = "image")]
+    pub fn user_text_image_sequence(
+        mut self,
+        text: impl Into<String>,
+        imgs: impl IntoIterator<Item = image::DynamicImage>,
+    ) -> Self {
+        self.stack = self.stack.user_text_image_sequence(text, imgs);
         self
     }
 
@@ -601,8 +694,8 @@ mod tests {
     fn test_message_stack_sequence() {
         let stack = MessageStack::new()
             .system("sys")
-            .user_images(vec![blank(100, 100), blank(200, 200)])
-            .user_images_text(vec![blank(50, 50)], "with text");
+            .user_image_sequence(vec![blank(100, 100), blank(200, 200)])
+            .user_image_sequence_text(vec![blank(50, 50)], "with text");
 
         let messages = stack.resolve().unwrap();
         assert_eq!(messages.len(), 3);
